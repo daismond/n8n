@@ -1,0 +1,50 @@
+# Dockerfile personnalisé pour n8n
+# Installe n8n depuis zéro (alternative au Dockerfile principal)
+
+FROM node:18-alpine
+
+# Installer les dépendances système nécessaires
+RUN apk add --no-cache \
+    bash \
+    curl \
+    python3 \
+    py3-pip \
+    tini \
+    su-exec \
+    git \
+    && rm -rf /var/cache/apk/*
+
+# Créer un utilisateur non-root
+RUN addgroup -g 1000 node && \
+    adduser -u 1000 -G node -s /bin/sh -D node
+
+# Définir le répertoire de travail
+WORKDIR /home/node
+
+# Installer n8n globalement
+RUN npm install -g n8n@latest
+
+# Changer le propriétaire des fichiers
+RUN chown -R node:node /home/node
+
+# Passer à l'utilisateur non-root
+USER node
+
+# Exposer le port par défaut de n8n
+EXPOSE 5678
+
+# Variables d'environnement par défaut
+ENV N8N_HOST=0.0.0.0
+ENV N8N_PORT=5678
+ENV N8N_PROTOCOL=http
+ENV NODE_ENV=production
+
+# Volume pour persister les données
+VOLUME ["/home/node/.n8n"]
+
+# Utiliser tini comme init pour gérer les signaux correctement
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Commande par défaut
+CMD ["n8n", "start"]
+
