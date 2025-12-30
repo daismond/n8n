@@ -40,9 +40,12 @@ docker run -d \
   --name n8n \
   -p 5678:5678 \
   -v n8n_data:/home/node/.n8n \
+  -e N8N_SECURE_COOKIE=false \
   --restart unless-stopped \
   n8nio/n8n:latest
 ```
+
+**Note** : `N8N_SECURE_COOKIE=false` est nécessaire si vous accédez via HTTP (non sécurisé).
 
 ### Méthode 3 : Dockerfile personnalisé
 
@@ -61,6 +64,7 @@ docker run -d --name n8n -p 5678:5678 -v n8n_data:/home/node/.n8n n8n-custom
 - `N8N_PORT` : Port d'écoute (par défaut: 5678)
 - `N8N_PROTOCOL` : Protocole (http ou https)
 - `NODE_ENV` : Environnement (production ou development)
+- `N8N_SECURE_COOKIE` : Cookies sécurisés (false pour HTTP, true pour HTTPS - par défaut)
 
 ### Sécurisation (Production)
 
@@ -140,6 +144,48 @@ services:
   n8n:
     image: n8nio/n8n:latest  # Au lieu de build: .
 ```
+
+### Erreur "secure cookie" - Cookies sécurisés
+
+Si vous voyez le message : *"Your n8n server is configured to use a secure cookie, however you are either visiting this via an insecure URL, or using Safari"*
+
+**Solution rapide (HTTP non sécurisé)** : La variable `N8N_SECURE_COOKIE=false` est déjà ajoutée dans `docker-compose.yml`. Redémarrez le conteneur :
+
+```bash
+docker-compose down
+docker-compose up -d
+```
+
+**Solution recommandée (HTTPS)** : Configurez HTTPS avec un reverse proxy Nginx :
+
+1. **Installer Nginx et Certbot** :
+   ```bash
+   sudo apt update
+   sudo apt install nginx certbot python3-certbot-nginx
+   ```
+
+2. **Copier la configuration Nginx** :
+   ```bash
+   sudo cp nginx.conf /etc/nginx/sites-available/n8n
+   sudo nano /etc/nginx/sites-available/n8n  # Modifiez votre-domaine.com
+   ```
+
+3. **Activer le site** :
+   ```bash
+   sudo ln -s /etc/nginx/sites-available/n8n /etc/nginx/sites-enabled/
+   sudo nginx -t  # Vérifier la configuration
+   sudo systemctl reload nginx
+   ```
+
+4. **Obtenir un certificat SSL** :
+   ```bash
+   sudo certbot --nginx -d votre-domaine.com
+   ```
+
+5. **Utiliser la configuration HTTPS** :
+   ```bash
+   docker-compose -f docker-compose.https.yml up -d
+   ```
 
 ### Vérifier que le conteneur fonctionne
 

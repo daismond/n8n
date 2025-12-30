@@ -1,0 +1,46 @@
+version: '3.8'
+
+# Configuration Docker Compose pour n8n avec HTTPS
+# Utilisez ce fichier si vous avez configuré un reverse proxy (Nginx) avec HTTPS
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5678:5678"  # Écoute uniquement sur localhost (derrière le proxy)
+    environment:
+      # Configuration de base
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https  # Important : utiliser https quand derrière un proxy HTTPS
+      - NODE_ENV=production
+      
+      # Cookies sécurisés activés (par défaut avec HTTPS)
+      # N8N_SECURE_COOKIE=true est la valeur par défaut, pas besoin de la définir
+      
+      # URL de base (remplacez par votre domaine)
+      - WEBHOOK_URL=https://votre-domaine.com/
+      - N8N_METRICS=true
+      
+      # Configuration de sécurité (recommandé pour production)
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=your_secure_password
+      
+      # Timezone
+      - TZ=Europe/Paris
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - n8n-network
+
+volumes:
+  n8n_data:
+    driver: local
+
+networks:
+  n8n-network:
+    driver: bridge
+

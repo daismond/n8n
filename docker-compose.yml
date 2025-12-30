@@ -17,6 +17,10 @@ services:
       - N8N_PROTOCOL=http
       - NODE_ENV=production
       
+      # Désactiver les cookies sécurisés si vous n'utilisez pas HTTPS
+      # Décommentez la ligne suivante si vous accédez via HTTP (non sécurisé)
+      - N8N_SECURE_COOKIE=false
+      
       # Configuration de la base de données (optionnel)
       # Décommentez et configurez si vous voulez utiliser une base de données externe
       # - DB_TYPE=postgresdb
